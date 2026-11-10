@@ -1,0 +1,281 @@
+{
+  "dataset": {
+    "data_source": "events",
+    "total_flows": 80000,
+    "train": 63578,
+    "test": 16422,
+    "class_counts": {
+      "Normal": 66101,
+      "Port Scan": 5208,
+      "DDoS": 2797,
+      "C2 Communication": 2347,
+      "Brute-Force": 1705,
+      "Data Exfiltration": 736,
+      "Insider Misuse": 686,
+      "Lateral Movement": 420
+    },
+    "n_features": 29,
+    "entity_baselines": true,
+    "entities_profiled": 220
+  },
+  "model_selection": {
+    "selected": "Random Forest",
+    "training_seconds": 39.826492995999956,
+    "comparison": [
+      {
+        "model": "Random Forest",
+        "cv_accuracy": 0.9907987091449665,
+        "cv_accuracy_std": 0.0008977119836874716,
+        "cv_f1_macro": 0.9283063226970634,
+        "cv_f1_macro_std": 0.007560059051760834,
+        "fit_seconds": 24.155545393625896
+      },
+      {
+        "model": "Gradient Boosting",
+        "cv_accuracy": 0.9876372426474642,
+        "cv_accuracy_std": 0.00056733417009128,
+        "cv_f1_macro": 0.9259889135447547,
+        "cv_f1_macro_std": 0.0023052789703264043,
+        "fit_seconds": 3.4202913443247476
+      },
+      {
+        "model": "Decision Tree",
+        "cv_accuracy": 0.9724746754959339,
+        "cv_accuracy_std": 0.004368637548096259,
+        "cv_f1_macro": 0.8544263092755396,
+        "cv_f1_macro_std": 0.012290542454787489,
+        "fit_seconds": 0.9912147521972656
+      },
+      {
+        "model": "Logistic Regression",
+        "cv_accuracy": 0.9354808684791024,
+        "cv_accuracy_std": 0.003176725223381349,
+        "cv_f1_macro": 0.7859217662013709,
+        "cv_f1_macro_std": 0.0038331538557407722,
+        "fit_seconds": 2.4521491527557373
+      }
+    ]
+  },
+  "classifier_test": {
+    "accuracy": 0.9871513822920472,
+    "f1_macro": 0.8986155278695571,
+    "report": {
+      "Normal": {
+        "precision": 0.9895654766341209,
+        "recall": 0.9968466101058638,
+        "f1-score": 0.9931926989826452,
+        "support": 13319.0
+      },
+      "DDoS": {
+        "precision": 1.0,
+        "recall": 0.9963302752293578,
+        "f1-score": 0.9981617647058824,
+        "support": 545.0
+      },
+      "Brute-Force": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 387.0
+      },
+      "Port Scan": {
+        "precision": 0.998426435877262,
+        "recall": 1.0,
+        "f1-score": 0.9992125984251968,
+        "support": 1269.0
+      },
+      "Data Exfiltration": {
+        "precision": 0.8805970149253731,
+        "recall": 0.7151515151515152,
+        "f1-score": 0.7892976588628763,
+        "support": 165.0
+      },
+      "C2 Communication": {
+        "precision": 0.9425742574257425,
+        "recall": 0.9296875,
+        "f1-score": 0.9360865290068829,
+        "support": 512.0
+      },
+      "Lateral Movement": {
+        "precision": 0.9859154929577465,
+        "recall": 0.7216494845360825,
+        "f1-score": 0.8333333333333334,
+        "support": 97.0
+      },
+      "Insider Misuse": {
+        "precision": 0.7553191489361702,
+        "recall": 0.5546875,
+        "f1-score": 0.6396396396396397,
+        "support": 128.0
+      },
+      "accuracy": 0.9871513822920472,
+      "macro avg": {
+        "precision": 0.9440497283445519,
+        "recall": 0.8642941106278524,
+        "f1-score": 0.8986155278695571,
+        "support": 16422.0
+      },
+      "weighted avg": {
+        "precision": 0.9864350816930642,
+        "recall": 0.9871513822920472,
+        "f1-score": 0.9864541548342004,
+        "support": 16422.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        13277,
+        0,
+        0,
+        0,
+        10,
+        8,
+        1,
+        23
+      ],
+      [
+        0,
+        543,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        387,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1269,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        28,
+        0,
+        0,
+        0,
+        118,
+        19,
+        0,
+        0
+      ],
+      [
+        30,
+        0,
+        0,
+        0,
+        6,
+        476,
+        0,
+        0
+      ],
+      [
+        27,
+        0,
+        0,
+        0,
+        0,
+        0,
+        70,
+        0
+      ],
+      [
+        55,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        71
+      ]
+    ],
+    "labels": [
+      "Normal",
+      "DDoS",
+      "Brute-Force",
+      "Port Scan",
+      "Data Exfiltration",
+      "C2 Communication",
+      "Lateral Movement",
+      "Insider Misuse"
+    ]
+  },
+  "detection_test": {
+    "precision": 0.9536166072007785,
+    "recall": 0.9474701901385756,
+    "f1": 0.950533462657614,
+    "false_positive_rate": 0.010736541782416098,
+    "roc_auc": 0.991739452170187,
+    "alerts_raised": 3083,
+    "flows_evaluated": 16422,
+    "detection_rate_by_class": {
+      "Brute-Force": 1.0,
+      "C2 Communication": 0.919921875,
+      "DDoS": 1.0,
+      "Data Exfiltration": 0.8424242424242424,
+      "Insider Misuse": 0.4921875,
+      "Lateral Movement": 0.6804123711340206,
+      "Port Scan": 1.0
+    }
+  },
+  "response_test": {
+    "actions": {
+      "Investigate": 1449,
+      "Block": 930,
+      "Quarantine": 601,
+      "Escalate": 103
+    },
+    "severities": {
+      "Critical": 2616,
+      "High": 393,
+      "Medium": 74
+    }
+  },
+  "top_features": {
+    "dns_query_rate": 0.10226317175429236,
+    "unique_dst_ports_1m": 0.08048072707263351,
+    "entity_hour_surprisal": 0.06582700139652159,
+    "failed_logins": 0.06461377555576196,
+    "src_is_internal": 0.05618517574759945,
+    "beacon_interval_std": 0.05549511752640535,
+    "unique_dst_hosts_1m": 0.05479261606118891,
+    "entity_max_z": 0.05435310819664072,
+    "conn_count_1m": 0.05222280977905317,
+    "syn_ratio": 0.049206740764715984
+  },
+  "novel_threats": {
+    "novel_flows": 737,
+    "benign_flows": 8763,
+    "system_detection_rate": 1.0,
+    "anomaly_only_detection_rate": 1.0,
+    "anomaly_only_benign_flag_rate": 0.017916238731028187,
+    "mean_novel_anomaly_score": 1.0,
+    "assigned_types": {
+      "Suspicious Traffic": 727,
+      "Insider Misuse": 5,
+      "Lateral Movement": 5
+    },
+    "benign_false_positive_rate": 0.02293735022252653
+  },
+  "streaming": {
+    "batches": 33,
+    "mean_batch_latency_ms": 109.48735375758946,
+    "p95_batch_latency_ms": 141.1011099999996,
+    "flows_per_second": 4545.149248361192
+  }
+}

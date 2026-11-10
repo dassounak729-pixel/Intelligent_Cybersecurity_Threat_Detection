@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+
+# Generated data and models. Recreate them with:
+#   python main.py train --source events --force-data
+# (the trained model is about 60 MB, too large for a normal Git repository)
+data/raw/
+data/processed/
+outputs/models/
+outputs/logs/
+outputs/alerts/live_alerts.jsonl

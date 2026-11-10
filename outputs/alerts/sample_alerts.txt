@@ -1,0 +1,39 @@
+IP: 192.168.11.36
+Threat Score: 100%
+Threat Type: Suspicious Traffic
+Action: Investigate
+  Destination: 10.0.0.20:443 (TCP)
+  Entity: user_192_168_11_36 / WS-055
+  Severity: Critical  Confidence: 100%
+  MITRE ATT&CK: Unknown - Behavioural anomaly - unmapped
+  Evidence: total_bytes=594,794 (normal~5,508)
+
+IP: 185.39.127.56
+Threat Score: 100%
+Threat Type: Brute-Force
+Action: Block
+  Destination: 10.0.0.22:3389 (TCP)
+  Entity: external / SRV-12
+  Severity: Critical  Confidence: 98%
+  MITRE ATT&CK: Credential Access - T1110 Brute Force
+  Evidence: src_is_internal=0 (normal~1); entity_known=0 (normal~1); failed_logins=2 (normal~0)
+
+IP: 192.168.11.100
+Threat Score: 100%
+Threat Type: C2 Communication
+Action: Quarantine
+  Destination: 10.0.0.10:53 (UDP)
+  Entity: user_192_168_11_100 / WS-029
+  Severity: Critical  Confidence: 76%
+  MITRE ATT&CK: Command and Control - T1071 Application Layer Protocol
+  Evidence: dns_query_rate=9 (normal~1); entity_max_z=4.03 (normal~1.62); conn_count_1m=19 (normal~5)
+
+IP: 192.168.12.115
+Threat Score: 100%
+Threat Type: Data Exfiltration
+Action: Quarantine
+  Destination: 203.168.11.53:443 (TCP)
+  Entity: user_192_168_12_115 / WS-063
+  Severity: Critical  Confidence: 84%
+  MITRE ATT&CK: Exfiltration - T1048 Exfiltration Over Alternative Protocol
+  Evidence: entity_hour_surprisal=7.28 (normal~2.35); entity_max_z=4.86 (normal~1.62); duration=82.6 (normal~1.48)

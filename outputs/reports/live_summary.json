@@ -1,0 +1,77 @@
+{
+  "events": 37349,
+  "wall_seconds": 3.4727643310000076,
+  "simulated_seconds": 14423.584059,
+  "events_per_second": 10754.832876679853,
+  "alerts_raw": 4452,
+  "alerts_emitted": 249,
+  "alert_cooldown_seconds": 60,
+  "latency_ms_all_events": {
+    "p50": 167.11184199999707,
+    "p95": 208.10908000001405,
+    "p99": 208.10908000001405,
+    "max": 208.10908000001405
+  },
+  "latency_ms_emitted_alerts": {
+    "p50": 167.11184199999707,
+    "p95": 208.10908000001405,
+    "p99": 208.10908000001405,
+    "max": 208.10908000001405
+  },
+  "episodes_total": 57,
+  "episodes_detected": 55,
+  "episode_detection_rate": 0.9649122807017544,
+  "detection_by_class": {
+    "Brute-Force": {
+      "episodes": 10,
+      "detected": 10,
+      "detection_rate": 1.0,
+      "median_seconds_to_detect": 0.0,
+      "first_alert_type_correct": 1.0
+    },
+    "C2 Communication": {
+      "episodes": 7,
+      "detected": 7,
+      "detection_rate": 1.0,
+      "median_seconds_to_detect": 33.846825,
+      "first_alert_type_correct": 0.8571428571428571
+    },
+    "DDoS": {
+      "episodes": 5,
+      "detected": 5,
+      "detection_rate": 1.0,
+      "median_seconds_to_detect": 0.0,
+      "first_alert_type_correct": 1.0
+    },
+    "Data Exfiltration": {
+      "episodes": 8,
+      "detected": 8,
+      "detection_rate": 1.0,
+      "median_seconds_to_detect": 6.100566000000001,
+      "first_alert_type_correct": 1.0
+    },
+    "Insider Misuse": {
+      "episodes": 10,
+      "detected": 8,
+      "detection_rate": 0.8,
+      "median_seconds_to_detect": 17.8741105,
+      "first_alert_type_correct": 0.75
+    },
+    "Lateral Movement": {
+      "episodes": 7,
+      "detected": 7,
+      "detection_rate": 1.0,
+      "median_seconds_to_detect": 19.441939,
+      "first_alert_type_correct": 0.8571428571428571
+    },
+    "Port Scan": {
+      "episodes": 10,
+      "detected": 10,
+      "detection_rate": 1.0,
+      "median_seconds_to_detect": 0.0,
+      "first_alert_type_correct": 1.0
+    }
+  },
+  "normal_event_false_alert_rate": 0.005348083857954893,
+  "false_alerts_emitted_per_hour": 32.946041570263226
+}

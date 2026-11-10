@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Threat Detection - Live Dashboard</title>
+<style>
+  :root {
+    --bg:#f4f6f9; --panel:#ffffff; --text:#1c2733; --muted:#6b7a8c; --line:#e1e6ec;
+    --accent:#1f4e79; --accent2:#c0392b; --area:#9bb7d4; --ok:#2e8b57; --warn:#d68910;
+    --critical:#c0392b; --high:#e67e22; --medium:#d4ac0d; --low:#5d8aa8; --info:#9aa5b1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#10161d; --panel:#18212b; --text:#e6ecf2; --muted:#8a9aab; --line:#2a3644;
+            --accent:#6fa8dc; --accent2:#ee6c5b; --area:#35546f; --ok:#4fbf85; --warn:#e5a93d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  header { display:flex; flex-wrap:wrap; gap:12px 20px; align-items:center; justify-content:space-between;
+           padding:14px 24px; background:var(--panel); border-bottom:1px solid var(--line); }
+  h1 { font-size:18px; margin:0; }
+  .sub { color:var(--muted); font-size:12px; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600;
+          background:var(--info); color:#fff; }
+  .pill.running { background:var(--ok); } .pill.finished { background:var(--accent); }
+  .pill.error, .pill.offline { background:var(--critical); } .pill.starting { background:var(--warn); }
+  .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .controls label { color:var(--muted); font-size:12px; }
+  input, select, button { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px;
+                          background:var(--bg); color:var(--text); }
+  input { width:70px; }
+  button { background:var(--accent); color:#fff; border-color:var(--accent); cursor:pointer; font-weight:600; }
+  button:hover { filter:brightness(1.1); }
+  main { padding:18px 24px 40px; max-width:1500px; margin:0 auto; }
+  .progress { height:6px; background:var(--line); border-radius:4px; overflow:hidden; margin-bottom:16px; }
+  .progress > div { height:100%; width:0; background:var(--accent); transition:width .6s linear; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .kpi .label { color:var(--muted); font-size:12px; }
+  .kpi .value { font-size:26px; font-weight:700; margin:2px 0; font-variant-numeric:tabular-nums; }
+  .kpi .note { color:var(--muted); font-size:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:12px; margin-bottom:12px; }
+  .card h2 { font-size:13px; margin:0 0 8px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  canvas { width:100%; height:190px; display:block; }
+  .bars .row { display:grid; grid-template-columns:150px 1fr 48px; gap:8px; align-items:center; margin:5px 0; font-size:13px; }
+  .bars .track { background:var(--line); height:12px; border-radius:6px; overflow:hidden; }
+  .bars .fill { height:100%; background:var(--accent); }
+  .bars .count { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
+  .empty { color:var(--muted); font-size:13px; padding:8px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:12px; padding:6px 8px; border-bottom:1px solid var(--line); }
+  td { padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr.alert { cursor:pointer; } tr.alert:hover td { background:color-mix(in srgb, var(--accent) 8%, transparent); }
+  tr.detail td { color:var(--muted); font-size:12px; background:color-mix(in srgb, var(--accent) 5%, transparent); }
+  .sev { display:inline-block; min-width:62px; text-align:center; padding:1px 8px; border-radius:4px; color:#fff; font-size:12px; font-weight:600; }
+  .sev.Critical { background:var(--critical); } .sev.High { background:var(--high); }
+  .sev.Medium { background:var(--medium); } .sev.Low { background:var(--low); } .sev.Info { background:var(--info); }
+  .scroll { max-height:520px; overflow:auto; }
+  .banner { padding:10px 14px; border-radius:8px; margin-bottom:12px; background:var(--critical); color:#fff; display:none; }
+  footer { color:var(--muted); font-size:12px; margin-top:16px; }
+  .num { font-variant-numeric:tabular-nums; text-align:right; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Intelligent Cybersecurity Threat Detection <span class="sub">- live dashboard</span></h1>
+    <div class="sub">Simulated clock: <span id="clock">-</span> &nbsp;|&nbsp; status: <span id="status" class="pill">connecting</span></div>
+  </div>
+  <div class="controls">
+    <label for="hours">Hours</label><input id="hours" type="number" min="0.5" max="8" step="0.5" value="4">
+    <label for="speed">Speed</label>
+    <select id="speed">
+      <option value="60">60x</option><option value="120" selected>120x</option>
+      <option value="240">240x</option><option value="480">480x</option><option value="960">960x</option>
+    </select>
+    <button id="restart" type="button">Restart run</button>
+  </div>
+</header>
+<main>
+  <div id="banner" class="banner"></div>
+  <div class="progress"><div id="progress"></div></div>
+  <section class="kpis">
+    <div class="card kpi"><div class="label">Events processed</div><div class="value" id="k-events">0</div><div class="note" id="k-events-n">&nbsp;</div></div>
+    <div class="card kpi"><div class="label">Alerts shown to analyst</div><div class="value" id="k-alerts">0</div><div class="note" id="k-alerts-n">&nbsp;</div></div>
+    <div class="card kpi"><div class="label">Throughput</div><div class="value" id="k-eps">0</div><div class="note">events / second</div></div>
+    <div class="card kpi"><div class="label">Latency (event to scored)</div><div class="value" id="k-lat">-</div><div class="note" id="k-lat-n">p50 / p95 / p99 ms</div></div>
+    <div class="card kpi"><div class="label">Attack events flagged</div><div class="value" id="k-det">-</div><div class="note" id="k-det-n">simulator ground truth</div></div>
+    <div class="card kpi"><div class="label">False alerts per hour</div><div class="value" id="k-fa">-</div><div class="note" id="k-fa-n">simulator ground truth</div></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Events per simulated minute</h2><canvas id="c-events"></canvas></div>
+    <div class="card"><h2>Alerts per simulated minute</h2><canvas id="c-alerts"></canvas></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Alerts by threat type</h2><div class="bars" id="b-types"></div></div>
+    <div class="card"><h2>Scoring latency per batch (ms)</h2><canvas id="c-lat"></canvas></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Recommended actions</h2><div class="bars" id="b-actions"></div></div>
+    <div class="card"><h2>Severity</h2><div class="bars" id="b-sev"></div></div>
+  </section>
+  <section class="card" id="summary-card" style="display:none; margin-bottom:12px">
+    <h2>Run summary - attack episodes (simulator ground truth)</h2>
+    <div id="summary-top" class="sub" style="margin-bottom:6px"></div>
+    <table><thead><tr><th>Attack class</th><th class="num">Caught</th><th class="num">Median time to detect</th><th class="num">First alert type correct</th></tr></thead>
+    <tbody id="summary-rows"></tbody></table>
+  </section>
+  <section class="card">
+    <h2>Recent alerts <span class="sub" style="text-transform:none">(click a row for evidence)</span></h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Time</th><th>Severity</th><th>Source</th><th>Destination</th><th>Threat type</th><th class="num">Score</th><th>Action</th><th>MITRE ATT&amp;CK</th><th class="num">Latency</th></tr></thead>
+        <tbody id="alerts"></tbody>
+      </table>
+      <div id="alerts-empty" class="empty">No alerts yet.</div>
+    </div>
+  </section>
+  <footer>Simulated traffic. Ground-truth counters are only available because the feed is a simulator; a real deployment has no labels.
+  Repeat alerts for the same source and threat type are suppressed for 60 seconds.</footer>
+</main>
+<script>
+(function () {
+  "use strict";
+  var REFRESH_MS = 1000;
+  var $ = function (id) { return document.getElementById(id); };
+  var expanded = {};
+  var lastError = 0;
+  var synced = false;
+
+  function fmt(n) { return n === null || n === undefined ? "-" : Number(n).toLocaleString("en-US"); }
+  function pct(a, b) { return b > 0 ? (100 * a / b).toFixed(0) + "%" : "-"; }
+  function clockText(iso) { return iso ? iso.replace("T", " ") : "-"; }
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function setupCanvas(canvas) {
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    }
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    return { ctx: ctx, w: w, h: h };
+  }
+
+  function niceMax(v) {
+    if (v <= 5) return 5;
+    var p = Math.pow(10, Math.floor(Math.log10(v)));
+    var m = v / p;
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p;
+  }
+
+  function axes(c, ymax, labels) {
+    var ctx = c.ctx, left = 38, bottom = 22, top = 8, right = 8;
+    ctx.strokeStyle = cssVar("--line"); ctx.fillStyle = cssVar("--muted");
+    ctx.font = "11px system-ui, sans-serif"; ctx.lineWidth = 1;
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (var i = 0; i <= 4; i++) {
+      var y = top + (c.h - top - bottom) * (1 - i / 4);
+      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(c.w - right, y); ctx.stroke();
+      ctx.fillText(String(Math.round(ymax * i / 4)), left - 6, y);
+    }
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    (labels || []).forEach(function (l) {
+      ctx.textAlign = l.at === 0 ? "left" : (l.at === 1 ? "right" : "center");
+      ctx.fillText(l.text, left + (c.w - left - right) * l.at, c.h - bottom + 5);
+    });
+    return { left: left, right: right, top: top, bottom: bottom, pw: c.w - left - right, ph: c.h - top - bottom };
+  }
+
+  function timeLabels(state) {
+    if (!state.start_clock || !state.total_minutes) return [];
+    var start = new Date(state.start_clock), out = [];
+    for (var i = 0; i <= 4; i++) {
+      var d = new Date(start.getTime() + state.total_minutes * 60000 * i / 4);
+      out.push({ at: i / 4, text: ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) });
+    }
+    return out;
+  }
+
+  function drawSeries(canvasId, values, state, color, asBars, upto) {
+    var c = setupCanvas($(canvasId)), n = Math.max(values.length, 1);
+    var ymax = niceMax(Math.max.apply(null, values.concat([1])));
+    var a = axes(c, ymax, timeLabels(state)), ctx = c.ctx;
+    var step = a.pw / n;
+    if (asBars) {
+      ctx.fillStyle = color;
+      values.forEach(function (v, i) {
+        var h = a.ph * v / ymax;
+        ctx.fillRect(a.left + i * step + 0.5, a.top + a.ph - h, Math.max(step - 1, 1), h);
+      });
+    } else {
+      var shown = values.slice(0, Math.max(upto + 1, 0));
+      if (!shown.length) return;
+      ctx.beginPath(); ctx.moveTo(a.left + 0.5 * step, a.top + a.ph);
+      shown.forEach(function (v, i) { ctx.lineTo(a.left + (i + 0.5) * step, a.top + a.ph * (1 - v / ymax)); });
+      ctx.lineTo(a.left + (shown.length - 0.5) * step, a.top + a.ph); ctx.closePath();
+      ctx.fillStyle = cssVar("--area"); ctx.globalAlpha = 0.7; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.beginPath();
+      shown.forEach(function (v, i) {
+        var x = a.left + (i + 0.5) * step, y = a.top + a.ph * (1 - v / ymax);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  }
+
+  function drawLatency(batches) {
+    var c = setupCanvas($("c-lat")), ctx = c.ctx;
+    var means = batches.map(function (b) { return b.mean_ms || 0; });
+    var maxes = batches.map(function (b) { return b.max_ms || 0; });
+    var ymax = niceMax(Math.max.apply(null, maxes.concat([10])));
+    var a = axes(c, ymax, []), n = Math.max(batches.length - 1, 1);
+    function line(vals, color, dash) {
+      ctx.beginPath();
+      vals.forEach(function (v, i) {
+        var x = a.left + a.pw * i / n, y = a.top + a.ph * (1 - v / ymax);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.setLineDash(dash || []); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+    }
+    line(maxes, cssVar("--accent2"), [4, 3]);
+    line(means, cssVar("--accent"));
+    ctx.font = "11px system-ui, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = cssVar("--accent"); ctx.fillText("mean", a.left + 6, a.top + 2);
+    ctx.fillStyle = cssVar("--accent2"); ctx.fillText("max (dashed)", a.left + 46, a.top + 2);
+  }
+
+  function barList(containerId, counts, colorFn) {
+    var box = $(containerId); box.textContent = "";
+    var entries = Object.keys(counts).map(function (k) { return [k, counts[k]]; });
+    if (!entries.length) { var e = document.createElement("div"); e.className = "empty"; e.textContent = "Nothing yet."; box.appendChild(e); return; }
+    entries.sort(function (x, y) { return y[1] - x[1]; });
+    var max = entries[0][1];
+    entries.forEach(function (kv) {
+      var row = document.createElement("div"); row.className = "row";
+      var name = document.createElement("div"); name.textContent = kv[0];
+      var track = document.createElement("div"); track.className = "track";
+      var fill = document.createElement("div"); fill.className = "fill";
+      fill.style.width = (100 * kv[1] / max) + "%";
+      if (colorFn) fill.style.background = colorFn(kv[0]);
+      track.appendChild(fill);
+      var count = document.createElement("div"); count.className = "count"; count.textContent = fmt(kv[1]);
+      row.appendChild(name); row.appendChild(track); row.appendChild(count); box.appendChild(row);
+    });
+  }
+
+  function cell(text, cls) { var td = document.createElement("td"); td.textContent = text; if (cls) td.className = cls; return td; }
+
+  function renderAlerts(alerts) {
+    var body = $("alerts"); body.textContent = "";
+    $("alerts-empty").style.display = alerts.length ? "none" : "block";
+    alerts.forEach(function (a, i) {
+      var key = a.time + a.src_ip + a.threat_type;
+      var tr = document.createElement("tr"); tr.className = "alert";
+      tr.appendChild(cell(a.time));
+      var sevTd = document.createElement("td"), sev = document.createElement("span");
+      sev.className = "sev " + a.severity; sev.textContent = a.severity; sevTd.appendChild(sev); tr.appendChild(sevTd);
+      tr.appendChild(cell(a.src_ip));
+      tr.appendChild(cell(a.dst_ip + ":" + a.dst_port + " " + a.protocol));
+      tr.appendChild(cell(a.threat_type));
+      tr.appendChild(cell(a.threat_score === null ? "-" : a.threat_score.toFixed(1), "num"));
+      tr.appendChild(cell(a.action));
+      tr.appendChild(cell(a.mitre));
+      tr.appendChild(cell(a.latency_ms === null ? "-" : a.latency_ms + " ms", "num"));
+      tr.addEventListener("click", function () { expanded[key] = !expanded[key]; renderAlerts(alerts); });
+      body.appendChild(tr);
+      if (expanded[key]) {
+        var d = document.createElement("tr"); d.className = "detail";
+        var td = document.createElement("td"); td.colSpan = 9;
+        td.textContent = "Device " + a.device + " / user " + a.user + " - Evidence: " + (a.evidence || "none");
+        d.appendChild(td); body.appendChild(d);
+      }
+    });
+  }
+
+  function renderSummary(s) {
+    var card = $("summary-card");
+    if (!s || !s.detection_by_class) { card.style.display = "none"; return; }
+    card.style.display = "block";
+    $("summary-top").textContent = "Episodes caught: " + s.episodes_detected + " / " + s.episodes_total +
+      " (" + pct(s.episodes_detected, s.episodes_total) + "). False alerts on normal traffic: " +
+      (s.normal_event_false_alert_rate * 100).toFixed(2) + "% of normal events.";
+    var body = $("summary-rows"); body.textContent = "";
+    Object.keys(s.detection_by_class).sort().forEach(function (k) {
+      var r = s.detection_by_class[k], tr = document.createElement("tr");
+      tr.appendChild(cell(k));
+      tr.appendChild(cell(r.detected + " / " + r.episodes, "num"));
+      tr.appendChild(cell(r.median_seconds_to_detect === null ? "-" : r.median_seconds_to_detect.toFixed(0) + " s", "num"));
+      tr.appendChild(cell(r.first_alert_type_correct === null ? "-" : (r.first_alert_type_correct * 100).toFixed(0) + "%", "num"));
+      body.appendChild(tr);
+    });
+  }
+
+  function syncControls(s) {
+    if (synced || !s.hours) return;
+    synced = true;
+    $("hours").value = s.hours;
+    var select = $("speed"), value = String(Math.round(s.speed)), found = false;
+    for (var i = 0; i < select.options.length; i++) if (select.options[i].value === value) found = true;
+    if (!found) { var o = document.createElement("option"); o.value = value; o.textContent = value + "x"; select.appendChild(o); }
+    select.value = value;
+  }
+
+  function render(s) {
+    syncControls(s);
+    var pill = $("status"); pill.textContent = s.status; pill.className = "pill " + s.status;
+    var banner = $("banner");
+    if (s.status === "error") { banner.style.display = "block"; banner.textContent = "Run failed: " + s.message; }
+    else banner.style.display = "none";
+    $("clock").textContent = clockText(s.sim_clock);
+    $("progress").style.width = (s.progress * 100).toFixed(1) + "%";
+    $("k-events").textContent = fmt(s.events);
+    $("k-events-n").textContent = s.total_events ? "of " + fmt(s.total_events) + " (" + (s.progress * 100).toFixed(0) + "%)" : "\u00a0";
+    $("k-alerts").textContent = fmt(s.alerts_emitted);
+    $("k-alerts-n").textContent = fmt(s.alerts_raw) + " raw before de-duplication";
+    $("k-eps").textContent = fmt(Math.round(s.events_per_second));
+    var l = s.latency_ms;
+    $("k-lat").textContent = l.p95 === null ? "-" : l.p95 + " ms";
+    $("k-lat-n").textContent = l.p95 === null ? "p50 / p95 / p99" : "p50 " + l.p50 + " / p95 " + l.p95 + " / p99 " + l.p99;
+    var t = s.truth;
+    $("k-det").textContent = t.available ? pct(t.attack_flagged, t.attack_events) : "-";
+    $("k-det-n").textContent = t.available ? fmt(t.attack_flagged) + " of " + fmt(t.attack_events) + " attack events" : "simulator ground truth";
+    $("k-fa").textContent = t.false_alerts_per_hour === null ? "-" : t.false_alerts_per_hour.toFixed(1);
+    $("k-fa-n").textContent = t.available ? fmt(t.false_alerts_emitted) + " alerts on normal traffic" : "simulator ground truth";
+    var upto = -1;
+    if (s.start_clock && s.sim_clock) upto = Math.floor((new Date(s.sim_clock) - new Date(s.start_clock)) / 60000);
+    if (s.status === "finished") upto = s.series.events.length - 1;
+    drawSeries("c-events", s.series.events, s, cssVar("--accent"), false, upto);
+    drawSeries("c-alerts", s.series.alerts, s, cssVar("--accent2"), true, upto);
+    drawLatency(s.batches);
+    barList("b-types", s.types);
+    barList("b-actions", s.actions);
+    barList("b-sev", s.severities, function (k) { return cssVar("--" + k.toLowerCase()); });
+    renderAlerts(s.alerts);
+    renderSummary(s.summary);
+  }
+
+  function poll() {
+    fetch("/api/state", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (s) {
+      lastError = 0; render(s);
+    }).catch(function () {
+      lastError += 1;
+      if (lastError >= 2) { var p = $("status"); p.textContent = "offline"; p.className = "pill offline"; }
+    });
+  }
+
+  $("restart").addEventListener("click", function () {
+    fetch("/api/restart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Requested-With": "dashboard" },
+      body: JSON.stringify({ hours: parseFloat($("hours").value), speed: parseFloat($("speed").value) })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+      .then(function (res) {
+        if (!res.ok) { alert(res.body.error || "Could not restart"); return; }
+        expanded = {}; poll();
+      });
+  });
+
+  window.addEventListener("resize", poll);
+  poll(); setInterval(poll, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
